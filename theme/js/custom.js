@@ -4,6 +4,14 @@ All JavaScript fuctions Start
 
 (function ($) {
     'use strict';
+
+    // Let the browser decode gallery photos off the main rendering path. This
+    // is intentionally additive so it does not alter the site's layout.
+    if ('loading' in HTMLImageElement.prototype) {
+        document.querySelectorAll('img[loading="lazy"]').forEach(function (image) {
+            image.decoding = 'async';
+        });
+    }
 	
 /*--------------------------------------------------------------------------------------------
 	document.ready ALL FUNCTION START
@@ -198,7 +206,40 @@ All JavaScript fuctions Start
 		jQuery('#mobile-side-drawer').on('click', function () { 
 			jQuery('.mobile-sider-drawer-menu').toggleClass('active');
 		});
-	}		 
+	} 		 
+
+	// Reveal the main content sections once they approach the viewport. The
+	// selector is deliberately broad because all service pages share this layout.
+	function scroll_reveal(){
+		if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+			return;
+		}
+
+		var sections = document.querySelectorAll('.page-content > :not(.main-slider):not(.section_name), .site-footer');
+		if (!sections.length) {
+			return;
+		}
+
+		sections.forEach(function(section) {
+			section.classList.add('site-reveal');
+		});
+
+		if (!('IntersectionObserver' in window)) {
+			sections.forEach(function(section) { section.classList.add('is-visible'); });
+			return;
+		}
+
+		var observer = new IntersectionObserver(function(entries, currentObserver) {
+			entries.forEach(function(entry) {
+				if (entry.isIntersecting) {
+					entry.target.classList.add('is-visible');
+					currentObserver.unobserve(entry.target);
+				}
+			});
+		}, { rootMargin: '0px 0px -8%', threshold: 0.06 });
+
+		sections.forEach(function(section) { observer.observe(section); });
+	}
 
 
 	// > home_projects_filter Full Screen with no margin function by = owl.carousel.js ========================== //
@@ -504,6 +545,8 @@ function masonryBox() {
 		mobile_nav(),
 	//________Mobile side drawer function by = custom.js________//
 		mobile_side_drawer(),
+	// > Main sections entrance animation
+		scroll_reveal(),
 		
    // > home_projects_filter Full Screen with no margin function by = owl.carousel.js ========================== //
 	  home_projects_filter(),
